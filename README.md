@@ -1,8 +1,8 @@
-# LocalLLM-RPi: Run ChatGPT-style LLMs on Raspberry Pi 4B 🚀
+# LocalLLM-RPi: Run ChatGPT-style LLMs on Raspberry Pi 4B �
 
 This project provides a comprehensive guide and tools for setting up and running small, ChatGPT-style language models locally on a Raspberry Pi 4B. It offers an end-to-end solution, covering installation, API usage, performance tuning, and troubleshooting, enabling you to harness the power of LLMs on resource-constrained hardware.
 
-## 🚀 Key Features
+##  Key Features
 
 - **Ollama Integration:** Seamlessly run LLMs using Ollama, a powerful tool for managing and deploying language models.
 - **REST API Access:** Interact with the LLMs via a local REST API, enabling integration with other applications.
@@ -22,7 +22,7 @@ This project provides a comprehensive guide and tools for setting up and running
 | **Alternative LLM Runtime** | llama.cpp                 | Alternative framework for running quantized models with fine-grained control. |
 | **Hardware**    | Raspberry Pi 4B           | Target hardware platform.                                                   |
 
-## 📦 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
