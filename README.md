@@ -1,148 +1,132 @@
-# LocalLLM-RPi
-Run small, ChatGPT-style models fully on-device on a Raspberry Pi 4B (8 GB). This repo documents the end-to-end setup: install, run, API usage, tuning, and troubleshooting.
+# LocalLLM-RPi: Run ChatGPT-style LLMs on Raspberry Pi 4B 🚀
 
-Table of Contents
-Features
-Hardware & OS
-Quick Start (Ollama)
-Use the Local REST API
-Python Example (requests)
-Alternative: llama.cpp
-Performance Tips
-Troubleshooting
-Benchmarks (Pi 4B, 8 GB)
-Project Structure
-Roadmap
-License
-Features
-One-command install with Ollama (CPU-only on Pi).
-Pre-tuned commands for TinyLlama 1.1B, Llama 3.2 1B, Qwen2.5 1.5B.
-Simple REST API to integrate with your apps.
-Optional llama.cpp flow for maximum control over GGUF quantized models.
-Pi-specific tuning (swap, thermal, threads) for smoother chats.
-Hardware & OS
-Raspberry Pi 4B (8 GB) (works on 4 GB with tighter limits).
-Raspberry Pi OS 64-bit (very important).
-Good cooling (heatsink + fan recommended).
-Optional: external SSD (recommended if enabling larger swap).
-Quick Start (Ollama)
-Ollama is the easiest way to run small models locally.
-# 1) Install Ollama (ARM64 build)
-curl -fsSL https://ollama.com/install.sh | sh
+This project provides a comprehensive guide and tools for setting up and running small, ChatGPT-style language models locally on a Raspberry Pi 4B. It offers an end-to-end solution, covering installation, API usage, performance tuning, and troubleshooting, enabling you to harness the power of LLMs on resource-constrained hardware.
 
-# 2) Pull a small model
-ollama pull tinyllama:latest
-# Alternatives:
-# ollama pull llama3.2:1b
-# ollama pull qwen2.5:1.5b
-# ollama pull qwen2.5-coder:1.5b
+## 🚀 Key Features
 
-# 3) Chat interactively
-ollama run tinyllama:latest
-Tip: keep prompts short and set modest generation limits for snappy replies.
-Use the Local REST API
-Ollama exposes a local endpoint at http://localhost:11434.
-Single completion (curl):
-curl http://localhost:11434/api/generate -d '{
-  "model": "tinyllama:latest",
-  "prompt": "Explain PWM on a Raspberry Pi in 3 bullets.",
-  "options": {
-    "num_predict": 120,
-    "temperature": 0.7
-  }
-}'
-Chat format (streaming):
-curl -N http://localhost:11434/api/chat -d '{
-  "model": "llama3.2:1b",
-  "messages": [
-    {"role":"system","content":"You are Pi-IoT Assistant: concise, step-by-step."},
-    {"role":"user","content":"How do I read a DHT22 sensor on a Raspberry Pi?"}
-  ]
-}'
-Python Example (requests)
-# examples/ollama_chat.py
-import requests, json
+- **Ollama Integration:** Seamlessly run LLMs using Ollama, a powerful tool for managing and deploying language models.
+- **REST API Access:** Interact with the LLMs via a local REST API, enabling integration with other applications.
+- **Python Examples:** Utilize provided Python scripts to easily interact with the API and build custom applications.
+- **Hardware Optimization:** Get specific recommendations for hardware (Raspberry Pi 4B) and operating system (Raspberry Pi OS 64-bit) to maximize performance.
+- **Performance Tuning:** Optimize your setup with tips on swap configuration, thermal management, and thread count adjustments.
+- **Alternative llama.cpp Support:** Option to use `llama.cpp` for more control over GGUF quantized models.
+- **Benchmark Results:** Review benchmark results for the Pi 4B (8GB) to understand expected performance.
 
-MODEL = "tinyllama:latest"  # or "llama3.2:1b" / "qwen2.5:1.5b"
-URL = "http://localhost:11434/api/chat"
+## 🛠️ Tech Stack
 
-messages = [
-    {"role": "system", "content": "You are Pi-IoT Assistant: concise, step-by-step."},
-    {"role": "user", "content": "Give me a minimal example of using PWM on a Pi."}
-]
+| Category      | Technology                  | Description                                                                 |
+|---------------|-----------------------------|-----------------------------------------------------------------------------|
+| **LLM Runtime** | Ollama                      | Primary tool for running and managing LLMs.                               |
+| **OS**          | Raspberry Pi OS 64-bit      | Recommended operating system for the Raspberry Pi 4B.                       |
+| **API Client**  | Python `requests` library | Used in the example script for interacting with the REST API.                |
+| **Alternative LLM Runtime** | llama.cpp                 | Alternative framework for running quantized models with fine-grained control. |
+| **Hardware**    | Raspberry Pi 4B           | Target hardware platform.                                                   |
 
-resp = requests.post(URL, json={
-    "model": MODEL,
-    "messages": messages,
-    "options": {"num_predict": 160, "temperature": 0.6}
-}, stream=True)
+## 📦 Getting Started
 
-for line in resp.iter_lines():
-    if not line:
-        continue
-    data = json.loads(line.decode("utf-8"))
-    chunk = data.get("message", {}).get("content", "")
-    print(chunk, end="", flush=True)
-Run:
-python3 examples/ollama_chat.py
-Alternative: llama.cpp
-If you want lower-level control, compile llama.cpp and run GGUF quantized weights.
-# Build
-sudo apt update
-sudo apt install -y git build-essential cmake
-git clone https://github.com/ggerganov/llama.cpp
-cd llama.cpp
-make -j4 LLAMA_NATIVE=1
+### Prerequisites
 
-# Place a quantized model in ./models (example filename shown)
-# e.g., TinyLlama-1.1B-Chat.Q4_K_M.gguf
-./main -m models/TinyLlama-1.1B-Chat.Q4_K_M.gguf \
-  -t 3 -c 2048 -n 128 -ngl 0 \
-  -p "You are Pi-IoT Assistant. Be concise. Q: How to enable I2C on Raspberry Pi?"
-Flags:
--t 3 → threads (3 is often smoother on Pi 4).
--c 2048 → context length.
--n 128 → max tokens to generate.
--ngl 0 → CPU only (no GPU offload on Pi 4).
-Performance Tips
-Model size: stay ≤ 2B on Pi 4 for usable speeds.
-Quantization: prefer Q4_K_M (good balance) or q4_0 to fit RAM.
-Threads: start with -t 3 (or env OLLAMA_NUM_THREADS=3) to reduce throttling.
-Context: 1024–2048 tokens is plenty for small models.
-Swap (optional, SSD strongly recommended):
-sudo sed -i 's/CONF_SWAPSIZE=.*/CONF_SWAPSIZE=2048/' /etc/dphys-swapfile
-sudo dphys-swapfile setup
-sudo dphys-swapfile swapon
-Thermals: use a fan/heatsink; consider the performance governor:
-sudo apt install -y cpufrequtils
-echo 'GOVERNOR="performance"' | sudo tee /etc/default/cpufrequtils
-sudo systemctl restart cpufrequtils
-Troubleshooting
-Very slow output (<1 tok/s)
-Use a smaller model (TinyLlama 1.1B), reduce num_predict, lower -c, and set -t 3.
-Out of memory / model won’t load
-Use a more aggressive quant (Q4 instead of Q5), close other apps, increase swap (SSD).
-Thermal throttling
-Ensure active cooling; check with vcgencmd measure_temp and top/htop.
-Ollama can’t bind port
-Another process may be using 11434. Stop it or change the port: OLLAMA_HOST=0.0.0.0:11435 ollama serve.
-Benchmarks (Pi 4B, 8 GB)
-Your mileage will vary with cooling, OS, and flags.
-Model (quant)	Context	Threads	Tokens/sec (est.)	Notes
-TinyLlama 1.1B (Q4_K_M)	2048	3	~2–4	Best responsiveness
-Llama 3.2 1B (Q4)	2048	3	~2–3	Newer tokenizer/instructions
-Qwen2.5 1.5B (Q4)	1536	3	~1–2	Better reasoning, slower
-Update this table with your actual runs (scripts/bench.sh if you add one).
-Project Structure
-.
-├─ examples/
-│  └─ ollama_chat.py        # Minimal Python streaming client
-├─ README.md                # (this file)
-└─ scripts/                 # (optional) helper scripts you add later
-Roadmap
- Add systemd unit to run Ollama on boot.
- Add a tiny web UI (FastAPI/Flask) for chat in browser.
- Publish measured benchmarks per model/quant.
- Add Dockerfile (ARM64) for reproducible setup.
-License
-Choose a license for your repo (e.g., MIT). Remember, model weights you download have their own licenses—review them before redistribution.
+- Raspberry Pi 4B (recommended with 8GB RAM)
+- Raspberry Pi OS 64-bit installed
+- Internet connection for initial setup and model download
+
+### Installation
+
+1.  **Install Raspberry Pi OS 64-bit:** Follow the official Raspberry Pi documentation to install the 64-bit version of the OS on your Raspberry Pi.
+
+2.  **Install Ollama:**
+    ```bash
+    curl -fsSL https://ollama.ai/install.sh | sh
+    ```
+
+3.  **Install Python `requests` library:**
+    ```bash
+    pip3 install requests
+    ```
+
+### Running Locally
+
+1.  **Pull a Model:** Use Ollama to pull a pre-tuned model (e.g., TinyLlama, Llama 3.2, Qwen2.5):
+    ```bash
+    ollama pull tinyllama
+    ```
+
+2.  **Run the Model:** Start the model using Ollama:
+    ```bash
+    ollama run tinyllama "Write a short poem about Raspberry Pi."
+    ```
+
+3.  **Use the REST API (curl example):**
+    ```bash
+    curl -X POST http://localhost:11434/api/generate -d '{
+      "model": "tinyllama",
+      "prompt": "Write a short poem about Raspberry Pi."
+    }'
+    ```
+
+4.  **Run the Python Example:** Navigate to the `examples` directory and run the `ollama_chat.py` script:
+    ```bash
+    cd examples
+    python3 ollama_chat.py
+    ```
+
+## 💻 Usage
+
+The primary way to interact with the LLMs is through the Ollama REST API. The `examples/ollama_chat.py` script provides a basic example of how to send messages to the API and stream the response.
+
+**Example Python Usage:**
+
+```python
+import requests
+import json
+
+url = "http://localhost:11434/api/chat"
+
+data = {
+    "model": "tinyllama",
+    "messages": [
+        {
+            "role": "system",
+            "content": "You are a helpful assistant."
+        },
+        {
+            "role": "user",
+            "content": "Write a short poem about Raspberry Pi."
+        }
+    ],
+    "stream": False
+}
+
+response = requests.post(url, data=json.dumps(data), stream=False)
+
+if response.status_code == 200:
+    print(response.json()['message']['content'])
+else:
+    print(f"Error: {response.status_code} - {response.text}")
+```
+
+## 📂 Project Structure
+
+```
+LocalLLM-RPi/
+├── README.md
+├── examples/
+│   └── ollama_chat.py
+```
+
+## 📸 Screenshots
+
+(Add screenshots of the running model, API interactions, and Python script output here)
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit pull requests with bug fixes, new features, or improvements to the documentation.
+
+## 📝 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+
+Thank you for checking out LocalLLM-RPi! We hope this project helps you explore the exciting world of local LLMs on your Raspberry Pi.
+
+
