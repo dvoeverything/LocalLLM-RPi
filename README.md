@@ -116,7 +116,9 @@ LocalLLM-RPi/
 
 ## 📸 Screenshots
 
-(Add screenshots of the running model, API interactions, and Python script output here)
+<img width="1917" height="1067" alt="Screenshot 2025-10-02 at 12 59 48 PM" src="https://github.com/user-attachments/assets/8e9597ba-1188-4021-8a27-196a9ddc4fb9" />
+<img width="1336" height="843" alt="Screenshot 2025-10-02 at 1 01 26 PM" src="https://github.com/user-attachments/assets/f3021017-ef84-4956-8793-6fec68d6d75c" />
+
 
 ## 🤝 Contributing
 
